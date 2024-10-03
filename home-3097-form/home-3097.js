@@ -4,7 +4,7 @@ const webServer = express()
 const port = 7480;
 
 const form ='    <div>\n' +
-    '        <form action="http://localhost:7480/mood" method="get">\n' +
+    '        <form action="http://178.172.195.18:7480/mood" method="get">\n' +
     '            <div>\n' +
     '                <label for="name">Представьтесь:</label>\n' +
     '                <input type="text" id="name" name="name">\n' +
