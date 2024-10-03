@@ -1,4 +1,4 @@
-import express from 'express'
+const express = require('express');
 
 const webServer = express()
 const port = 7480;
