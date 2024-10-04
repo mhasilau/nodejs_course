@@ -26,6 +26,12 @@ function createForm(name = '') {
     </div>`;
 }
 
+const button = `
+    <button>
+    <a href="/">Назад</a>
+</button>
+    `
+
 const errorMessageShortName = '    <div>\n' +
     '        <span style="color: red">Тебя не могу звать одной буквой...</span>\n' +
     '    </div>';
@@ -68,7 +74,9 @@ webServer.get('/mood', (req, res) => {
         return res.send(createForm(userName) + errorMessageShortName);
     }
 
-    res.send(`Привет ${userName}. ${message}`);
+
+
+    res.send(`Привет ${userName}. ${message}` + button);
 
     console.log(`Привет ${userName}. ${message}`);
 });
