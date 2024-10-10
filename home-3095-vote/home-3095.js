@@ -42,7 +42,7 @@ function createFile() {
         if (err) {
             // File does not exist, create it
             fs.appendFile(votesFilePath, JSON.stringify(variants), (err) => {
-                if (err) throw err;
+                if (err)  new Error(err.message);
                 console.log('File created and data has been added!');
             });
         } else {
@@ -64,7 +64,7 @@ function updateVotes(vote) {
     }
 
     fs.writeFile(votesFilePath, JSON.stringify(fileContentJson), (err) => {
-        if (err) throw err;
+        if (err)  new Error(err.message);
         console.log('File created and data has been added!');
     });
     return fileContentJson
