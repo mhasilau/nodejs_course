@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Vote 4</title>
+</head>
+<body>
+
+
+<div>
+    <div class="variants">
+        <fieldset>
+            <legend>И президентом становится...</legend>
+            <form action="/stat" method="post" class="candidates">
+                <input type="submit" value="Голосовать" >
+            </form>
+        </fieldset>
+
+    </div>
+</div>
+
+
+<script>
+    const candidatesDiv = document.querySelector('.candidates')
+
+    async function getCandidates() {
+        fetch('/variants').then(res => res.json()).then(data => {
+            for (let i = 0; i < data.length; i++) {
+
+                const div = document.createElement('div')
+                const input = document.createElement('input')
+                const label = document.createElement('label')
+
+
+                input.type = 'radio'
+                input.id = data[i].candidateId
+                input.name = 'vote'
+                input.value = data[i].candidateId
+
+                label.innerText = data[i].value
+
+                div.append(input, label)
+                candidatesDiv.prepend(div)
+
+
+            }
+        })
+    }
+    getCandidates()
+
+
+</script>
+
+
+</body>
+</html>

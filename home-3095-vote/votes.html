@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Results</title>
+</head>
+<body>
+
+<div class="results">
+
+</div>
+
+
+<button><a href="/">Назад</a></button>
+
+
+<script>
+    const results = document.querySelector('.results')
+    function getResults() {
+        fetch('/votes').then(res => res.json()).then(data => {
+            const maxResult = findMaxvalue(data)
+            data.forEach(result => {
+                const resDiv = document.createElement('div')
+                const resName = document.createElement('span')
+                const resVote = document.createElement('span')
+                resName.innerText = result.value
+                resVote.innerText = result.votes
+
+                if(result.votes === maxResult) {
+                    resName.style.fontWeight = 'bold'
+                    resVote.style.fontWeight = 'bold'
+                }
+
+                resDiv.append(resName, ' : ', resVote )
+                results.append(resDiv)
+
+            })
+        })
+    }
+    getResults()
+
+    function findMaxvalue(arr) {
+        let max = 0
+        for(let i = 0; i < arr.length; i++) {
+            if(max < arr[i].votes) {
+                max = arr[i].votes
+            }
+        }
+        return max
+
+    }
+
+
+</script>
+</body>
+</html>
