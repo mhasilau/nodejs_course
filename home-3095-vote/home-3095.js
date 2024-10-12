@@ -3,9 +3,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 
-const urlencodedParser = express.urlencoded({extended: false});
-
 const webServer = express()
+webServer.use(express.json());
 webServer.use(bodyParser.json());
 
 const port = 7481;
@@ -55,29 +54,37 @@ function createFile() {
 createFile()
 
 function updateVotes(vote) {
-    let fileContent = fs.readFileSync(votesFilePath, 'utf8');
-    let fileContentJson = JSON.parse(fileContent)
-    for (let candidate of fileContentJson) {
-        if (candidate.candidateId === Number(vote.vote)) {
-            candidate.votes =  candidate.votes + 1
-        }
-    }
+    return new Promise((resolve, reject) => {
+        fs.readFile(votesFilePath, 'utf8', (err, fileContent) => {
+            if (err) return reject(err);
 
-    fs.writeFile(votesFilePath, JSON.stringify(fileContentJson), (err) => {
-        if (err)  new Error(err.message);
-        console.log('File created and data has been added!');
+            let fileContentJson = JSON.parse(fileContent);
+            for (let candidate of fileContentJson) {
+                if (candidate.candidateId === Number(vote.vote)) {
+                    candidate.votes = candidate.votes + 1;
+                }
+            }
+
+            fs.writeFile(votesFilePath, JSON.stringify(fileContentJson), (err) => {
+                if (err) return reject(err);
+                resolve(fileContentJson);
+            });
+        });
     });
-    return fileContentJson
-
 }
 
 webServer.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-webServer.post('/stat',urlencodedParser, (req, res) => {
-    updateVotes(req.body)
-    res.sendFile( path.resolve(__dirname, 'votes.html') )
+webServer.post('/stat', async (req, res) => {
+    try {
+        const updatedVotes = await updateVotes(req.body);
+        res.status(200).json(updatedVotes);
+    } catch (error) {
+        console.error('Error updating votes:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 webServer.get('/variants', (req, res) => {
