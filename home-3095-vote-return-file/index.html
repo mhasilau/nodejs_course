@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Vote 4</title>
+</head>
+<body>
+
+
+<div>
+    <div class="variants">
+        <fieldset>
+            <legend>И президентом становится...</legend>
+            <div class="candidates">
+                <input type="submit" value="Голосовать" id="sendVote" >
+            </div>
+        </fieldset>
+
+    </div>
+
+    <div class="votes">
+        <div class="results"></div>
+        <button><a href="/">Назад</a></button>
+    </div>
+</div>
+
+
+<script>
+    const votes = document.querySelector('.votes')
+    const results = document.querySelector('.results')
+    votes.style.display = 'none'
+    const candidatesDiv = document.querySelector('.candidates')
+    const variantsDiv = document.querySelector('.variants')
+    const sendVote = document.querySelector('#sendVote')
+    // vote form
+
+    async function getCandidates() {
+        await fetch('/variants').then(res => res.json()).then(data => {
+            for (let i = 0; i < data.length; i++) {
+
+                const div = document.createElement('div')
+                const input = document.createElement('input')
+                const label = document.createElement('label')
+
+                input.type = 'radio'
+                input.id = data[i].candidateId
+                input.name = 'vote'
+                input.value = data[i].candidateId
+                label.innerText = data[i].value
+
+                div.append(input, label)
+                candidatesDiv.prepend(div)
+            }
+        })
+    }
+    getCandidates()
+
+    sendVote.onclick =  async (event) => {
+        event.preventDefault()
+        const selectedCandidate = document.querySelector('input[name="vote"]:checked');
+        if (selectedCandidate) {
+            await vote(selectedCandidate.value)
+            await getResults()
+        } else {
+            console.log('No candidate selected');
+        }
+    }
+
+    async function vote(candidateId) {
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({vote: candidateId})
+        }
+        return await fetch('/vote', options).then(response => response.json())
+    }
+
+// votes
+
+    async function getResults() {
+        await fetch('/stat').then(res => res.json()).then(data => {
+            votes.style.display = 'block'
+            variantsDiv.style.display = 'none'
+            const maxResult = findMaxvalue(data)
+            data.forEach(result => {
+                const resDiv = document.createElement('div')
+                const resName = document.createElement('span')
+                const resVote = document.createElement('span')
+                resName.innerText = result.value
+                resVote.innerText = result.votes
+
+                if(result.votes === maxResult) {
+                    resName.style.fontWeight = 'bold'
+                    resVote.style.fontWeight = 'bold'
+                }
+
+                resDiv.append(resName, ' : ', resVote )
+                results.append(resDiv)
+
+            })
+        })
+    }
+
+    function findMaxvalue(arr) {
+        let max = 0
+        for(let i = 0; i < arr.length; i++) {
+            if(max < arr[i].votes) {
+                max = arr[i].votes
+            }
+        }
+        return max
+    }
+</script>
+</body>
+</html>
