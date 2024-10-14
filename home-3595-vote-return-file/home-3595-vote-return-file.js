@@ -98,7 +98,6 @@ webServer.get('/format', async (req, res) => {
 
     switch (format) {
         case 'application/json':
-            console.log('json')
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Content-Disposition", 'attachment; filename="voting_results.json"');
             res.status(200).send(JSON.stringify({data: json}, null, 2));
