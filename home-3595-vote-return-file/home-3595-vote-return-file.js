@@ -97,7 +97,8 @@ webServer.get('/format', async (req, res) => {
     const format = req.headers.accept;
 
     switch (format) {
-        case 'application/json"':
+        case 'application/json':
+            console.log('json')
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Content-Disposition", 'attachment; filename="voting_results.json"');
             res.status(200).send(JSON.stringify({data: json}, null, 2));
@@ -110,7 +111,7 @@ webServer.get('/format', async (req, res) => {
         case 'text/html':
             res.setHeader("Content-Type", "text/html");
             res.setHeader("Content-Disposition", 'attachment; filename="voting_results.html"');
-            res.send(createHTML(json));
+            res.status(200).send(createHTML(json));
             break;
         default:
             res.status(406).send('Not Acceptable');
