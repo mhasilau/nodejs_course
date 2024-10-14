@@ -104,10 +104,10 @@ webServer.get('/format', async (req, res) => {
             res.status(200).send(createXML(json));
 
             break;
-        case 'application/html':
-            res.setHeader("Content-Type", "application/html");
+        case 'text/html':
+            res.setHeader("Content-Type", "text/html");
 
-            res.status(200).json({data: createHTML(json)});
+            res.status(200).send(createHTML(json));
             break;
 
     }
@@ -144,7 +144,7 @@ function createXML(data) {
     return startDiv + endDiv
 }
 
-webServer.get('/stat', (req, res) => {
+webServer.post('/stat', (req, res) => {
     let fileContent = fs.readFileSync(votesFilePath, 'utf8');
     res.json(JSON.parse(fileContent));
 });

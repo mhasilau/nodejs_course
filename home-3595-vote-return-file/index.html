@@ -18,13 +18,19 @@
                 <input type="submit" value="Голосовать" id="sendVote" >
             </div>
         </fieldset>
-
     </div>
 
     <div class="votes">
         <div class="results"></div>
         <button><a href="/">Назад</a></button>
     </div>
+
+    <div class="results">
+        <button id="xml">XML</button>
+        <button id="json">JSON</button>
+        <button id="html">HTML</button>
+    </div>
+    <div class="result-html"></div>
 </div>
 
 
@@ -34,8 +40,14 @@
     votes.style.display = 'none'
     const candidatesDiv = document.querySelector('.candidates')
     const variantsDiv = document.querySelector('.variants')
+    const resultHtmlDiv = document.querySelector('.result-html')
     const sendVote = document.querySelector('#sendVote')
+    const xmlBtn = document.querySelector('#xml')
+    const jsonBtn = document.querySelector('#json')
+    const htmlBtn = document.querySelector('#html')
     // vote form
+
+
 
     async function getCandidates() {
         await fetch('/variants').then(res => res.json()).then(data => {
@@ -80,10 +92,12 @@
         return await fetch('/vote', options).then(response => response.json())
     }
 
-// votes
+    // votes
 
     async function getResults() {
-        await fetch('/stat').then(res => res.json()).then(data => {
+        await fetch('/stat', {
+            method: 'POST'
+        }).then(res => res.json()).then(data => {
             votes.style.display = 'block'
             variantsDiv.style.display = 'none'
             const maxResult = findMaxvalue(data)
@@ -114,6 +128,46 @@
             }
         }
         return max
+    }
+
+    // get format
+    async function getFormatData(format) {
+        const url = `/format?format=${format}`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = downloadUrl;
+            a.download = `voting_results.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            console.error('Error downloading file:', error);
+        }
+    }
+
+    xmlBtn.onclick = () => getFormatData('xml');
+    jsonBtn.onclick = () => getFormatData('json');
+    htmlBtn.onclick = () => getFormatData('html');
+
+    xmlBtn.onclick = async () => {
+        await getFormatData('xml')
+    }
+
+    jsonBtn.onclick = async () => {
+        await getFormatData('json')
+    }
+
+    htmlBtn.onclick = async () => {
+        await getFormatData('html')
     }
 </script>
 </body>

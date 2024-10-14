@@ -95,7 +95,9 @@
 // votes
 
     async function getResults() {
-        await fetch('/stat').then(res => res.json()).then(data => {
+        await fetch('/stat', {
+            method: 'POST'
+        }).then(res => res.json()).then(data => {
             votes.style.display = 'block'
             variantsDiv.style.display = 'none'
             const maxResult = findMaxvalue(data)
@@ -152,12 +154,13 @@
             case 'html':
                 const optionsHtml = {
                     headers: {
-                        'Accept': 'application/html',
+                        'Accept': 'text/html',
                     },
                 }
-                const html = await fetch('/format', optionsHtml).then(res => res.json())
+                const html = await fetch('/format', optionsHtml).then(res => res.text())
+                console.log(html)
                 const parser = new DOMParser();
-                const htmlDocument = parser.parseFromString(html.data, 'text/html');
+                const htmlDocument = parser.parseFromString(html, 'text/html');
                 resultHtmlDiv.innerHTML = '';
 
                 Array.from(htmlDocument.body.children).forEach(child => {

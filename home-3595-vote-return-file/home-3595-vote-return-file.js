@@ -7,7 +7,7 @@ const webServer = express()
 webServer.use(express.json());
 webServer.use(bodyParser.json());
 
-const port = 7480;
+const port = 7481;
 
 const votesFilePath = path.join(__dirname, 'votes.txt');
 
@@ -91,7 +91,64 @@ webServer.get('/variants', (req, res) => {
     res.json(variants);
 });
 
-webServer.get('/stat', (req, res) => {
+webServer.get('/format', async (req, res) => {
+    const fileContent = fs.readFileSync(votesFilePath, 'utf8');
+    const json = JSON.parse(fileContent);
+    const format = req.query.format; // Получаем формат из query параметра
+
+    switch (format) {
+        case 'json':
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("Content-Disposition", 'attachment; filename="voting_results.json"');
+            res.status(200).send(JSON.stringify({data: json}, null, 2));
+            break;
+        case 'xml':
+            res.setHeader("Content-Type", "application/xml");
+            res.setHeader("Content-Disposition", 'attachment; filename="voting_results.xml"');
+            res.status(200).send(createXML(json));
+            break;
+        case 'html':
+            res.setHeader("Content-Type", "text/html");
+            res.setHeader("Content-Disposition", 'attachment; filename="voting_results.html"');
+            res.send(createHTML(json));
+            break;
+        default:
+            res.status(406).send('Not Acceptable');
+    }
+});
+
+
+function createHTML(data) {
+    let startDiv = '<div>'
+    const endDiv = '</div>'
+
+    data.forEach((item) => {
+        const candidate = `
+                                <div>
+                                <span>${item.value}</span> набрал(а) <span>${item.votes}</span> голосов
+                                </div>
+                                `
+        startDiv += candidate
+    })
+    return startDiv + endDiv
+}
+
+function createXML(data) {
+    let startDiv = '<busket>'
+    const endDiv = '</busket>'
+
+    data.forEach((item) => {
+        const candidate = `
+                                <note>
+                                <candidate>${item.value}</candidate> набрал(а) <votes>${item.votes}</votes> голосов
+                                </note>
+                                `
+        startDiv += candidate
+    })
+    return startDiv + endDiv
+}
+
+webServer.post('/stat', (req, res) => {
     let fileContent = fs.readFileSync(votesFilePath, 'utf8');
     res.json(JSON.parse(fileContent));
 });
