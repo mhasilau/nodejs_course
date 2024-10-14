@@ -94,20 +94,20 @@ webServer.get('/variants', (req, res) => {
 webServer.get('/format', async (req, res) => {
     const fileContent = fs.readFileSync(votesFilePath, 'utf8');
     const json = JSON.parse(fileContent);
-    const format = req.query.format; // Получаем формат из query параметра
+    const format = req.headers.accept;
 
     switch (format) {
-        case 'json':
+        case 'application/json"':
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Content-Disposition", 'attachment; filename="voting_results.json"');
             res.status(200).send(JSON.stringify({data: json}, null, 2));
             break;
-        case 'xml':
+        case 'application/xml':
             res.setHeader("Content-Type", "application/xml");
             res.setHeader("Content-Disposition", 'attachment; filename="voting_results.xml"');
             res.status(200).send(createXML(json));
             break;
-        case 'html':
+        case 'text/html':
             res.setHeader("Content-Type", "text/html");
             res.setHeader("Content-Disposition", 'attachment; filename="voting_results.html"');
             res.send(createHTML(json));

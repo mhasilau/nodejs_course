@@ -132,10 +132,29 @@
 
     // get format
     async function getFormatData(format) {
-        const url = `/format?format=${format}`;
+        const url = '/format';
+        let options = {}
+
+        switch (format) {
+            case 'xml':
+                options.headers = {
+                    'Accept': 'application/xml'
+                }
+                break;
+            case 'json':
+                options.headers = {
+                    'Accept': 'application/json'
+                }
+                break;
+            case 'html':
+                options.headers = {
+                    'Accept': 'text/html',
+                }
+                break;
+        }
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             if (!response.ok) {
                 new Error(`HTTP error! status: ${response.status}`);
             }
