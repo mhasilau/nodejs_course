@@ -91,7 +91,7 @@ webServer.get('/variants', (req, res) => {
     res.json(variants);
 });
 
-webServer.get('/format', async (req, res) => {
+webServer.post('/format', async (req, res) => {
     const fileContent = fs.readFileSync(votesFilePath, 'utf8');
     const json = JSON.parse(fileContent);
     const format = req.headers.accept;
@@ -152,14 +152,6 @@ webServer.post('/stat', (req, res) => {
     let fileContent = fs.readFileSync(votesFilePath, 'utf8');
     res.json(JSON.parse(fileContent));
 });
-
-
-
-
-
-
-
-
 
 
 webServer.listen(port, () => {
