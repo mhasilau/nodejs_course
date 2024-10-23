@@ -161,12 +161,7 @@ function collectAndSubmitData() {
         }
     });
     requestData.headers = headersReq
-    console.log('Request Data:', requestData)
     saveOptions(requestData)
-
-
-
-
 }
 
 submitBtn.onclick = collectAndSubmitData
