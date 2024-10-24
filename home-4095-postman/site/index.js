@@ -7,6 +7,7 @@ const reqHeadersDiv = document.querySelector('.req-headers')
 
 const paramsDiv = document.querySelector('.params')
 const headersDiv = document.querySelector('.headers')
+const responseDiv = document.querySelector('.response')
 
 
 
@@ -203,7 +204,50 @@ function sendRequest(data) {
             'Content-Type': 'application/json'  // Set the correct content type
         },
         body: JSON.stringify(data)
-    }).then(res => res.json()).then(res => console.log(res))
+    }).then(res => res.json()).then(res => {
+        renderResponseData(res)
+    }).catch(error => console.error('Ошибка:', error));
+}
+
+function renderResponseData(data) {
+    responseDiv.innerHTML = ''
+    const h2 = document.createElement('h2');
+    h2.innerHTML = `Ответ на запрос`;
+    responseDiv.appendChild(h2);
+
+    const status = document.createElement('h5');
+    status.innerHTML = `Статус ответа ${200}`; // TODO получить статус
+    responseDiv.appendChild(status);
+
+    const headers = document.createElement('div');
+    headers.classList.add('res-headers')
+
+    const ul = document.createElement('ul');
+    for (let header in data.resHeaders) {
+        console.log(header)
+        const li = document.createElement('li');
+        li.innerText = header +" : "+ data.resHeaders[header]
+        ul.appendChild(li)
+    }
+    headers.appendChild(ul);
+    responseDiv.appendChild(status);
+
+    const bodyDiv = document.createElement('div');
+    bodyDiv.classList.add('res-body')
+
+    const body_h5 = document.createElement('h5');
+    body_h5.innerHTML = 'Тело ответа:';
+
+
+    bodyDiv.appendChild(body_h5);
+
+    const text = document.createElement('textarea');
+    text.innerText = JSON.stringify(data.resBody)
+    text.classList.add('w-100')
+    bodyDiv.appendChild(text);
+
+    responseDiv.appendChild(headers);
+    responseDiv.appendChild(bodyDiv);
 }
 
 function renderSavedRequests(reqs) {

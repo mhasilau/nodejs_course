@@ -40,7 +40,7 @@ function saveFile(data, callback) {
 }
 
 function objectToQueryString(obj) {
-    let queryString = "";
+    let queryString = "?";
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {
             if (queryString !== "") {
@@ -88,28 +88,45 @@ webServer.get('/get-saved-requests', (req, res) => {
 
 webServer.post('/request', async (req, res) => {
     const {method, url, params, body, headers} = req.body;
+    let resStatus;
     let resBody;
     let resHeaders = {};
 
+
     if(method === 'GET') {
+
+        let query = '';
+        if (Object.values(params).length) {
+            query = objectToQueryString(params);
+        }
+        console.log(url + query);
+
         try {
-            const response = await fetch(url, {
+            const response = await fetch(url + query, {
                 method: method,
                 headers: headers,
             });
 
+            // Захват статуса ответа
+            resStatus = response.status;
+
+            // Захват заголовков ответа
             response.headers.forEach((value, key) => {
                 resHeaders[key] = value;
             });
+
+            // Парсинг тела ответа как JSON
             resBody = await response.json();
+
         } catch (e) {
             console.log(e);
             return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
         }
 
-        return res.send({
+// Отправка обратно ответа с полученным статусом, заголовками и телом
+        return res.status(resStatus).send({
             resBody,
-            resHeaders
+            resHeaders,
         });
     }
 
