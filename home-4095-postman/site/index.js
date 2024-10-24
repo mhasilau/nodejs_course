@@ -121,12 +121,19 @@ function addNewHeaders() {
 }
 
 
-function collectAndSubmitData() {
-    
+function collectAndSubmitData(todo) {
+    let body = httpBody.value ? JSON.parse(httpBody.value) : '{}'
+
+    if (httpBody.value) {
+        console.log('val')
+    } else {
+        console.log('none')
+    }
+
     const requestData = {
         method: httpMethodSelect.value,
         url: httpUrl.value,
-        body: httpBody.value,
+        body: body,
         params: {},
         headers: {}
     };
@@ -149,8 +156,7 @@ function collectAndSubmitData() {
     // Collect headers
     const headerRows = headersDiv.querySelectorAll('.header');
     headerRows.forEach(row => {
-        console.log(row);
-        
+
         const select = row.querySelector('select');
         const input = row.querySelector('input');
 
@@ -161,20 +167,28 @@ function collectAndSubmitData() {
         }
     });
     requestData.headers = headersReq
-    saveOptions(requestData)
+
+    switch (todo) {
+        case 'POST':
+            console.log('post')
+            sendRequest(requestData)
+            break;
+        case 'SAVE':
+            saveRequest(requestData)
+            break;
+    }
+
 }
 
-submitBtn.onclick = collectAndSubmitData
-
+submitBtn.onclick = () => collectAndSubmitData('POST')
+saveBtn.onclick = () => collectAndSubmitData('SAVE')
 cleanBtn.onclick = clearForm;
 
 function clearForm() {
   httpMethodSelect.selectedIndex = 0;
   httpUrl.value = '';
   httpBody.value = '';
-
   paramsDiv.innerHTML = '';
-
   headersDiv.innerHTML = '';
 
   hideParams();
@@ -182,8 +196,8 @@ function clearForm() {
   reqBodyDiv.style.display = 'none';
 }
 
-function saveOptions(data) {
-    fetch('/save-request', {
+function sendRequest(data) {
+    fetch('/request', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'  // Set the correct content type
@@ -191,3 +205,59 @@ function saveOptions(data) {
         body: JSON.stringify(data)
     }).then(res => res.json()).then(res => console.log(res))
 }
+
+function renderSavedRequests(reqs) {
+    savedMethodsDiv.innerHTML = '';
+    console.log('render', reqs)
+    reqs.forEach(req => {
+        const method = document.createElement('div')
+        method.classList.add('method')
+        method.classList.add(req.method.toLowerCase())
+
+        const h5 = document.createElement('h5');
+        h5.innerHTML = `Метод: <span>${req.method}</span>`;
+        method.appendChild(h5);
+
+        const p = document.createElement('p');
+        p.textContent = req.url;
+        method.appendChild(p);
+
+        const del = document.createElement('button');
+        del.className = 'delete-save-method';
+        del.textContent = 'x';
+        del.onclick = () => {
+
+        }
+        method.appendChild(del);
+
+        const post = document.createElement('button');
+        post.className = 'save-submit';
+        post.textContent = 'Отправить запрос';
+        post.onclick = () => {
+            sendRequest(req)
+        }
+        method.appendChild(post);
+
+        savedMethodsDiv.appendChild(method);
+    })
+}
+
+function saveRequest(data) {
+    fetch('/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'  // Set the correct content type
+        },
+        body: JSON.stringify(data)
+    }).then(res => res.json()).then(res => renderSavedRequests(res))
+}
+
+function getSavedRequest() {
+    fetch('/get-saved-requests', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'  // Set the correct content type
+        },
+    }).then(res => res.json()).then(res => renderSavedRequests(res))
+}
+getSavedRequest()
