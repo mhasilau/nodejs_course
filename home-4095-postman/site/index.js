@@ -168,6 +168,7 @@ function collectAndSubmitData(todo) {
         }
     });
     requestData.headers = headersReq
+    requestData.id = new Date().getTime()
 
     switch (todo) {
         case 'POST':
@@ -273,7 +274,7 @@ function renderSavedRequests(reqs) {
         del.className = 'delete-save-method';
         del.textContent = 'x';
         del.onclick = () => {
-
+            deleteSavedRequest(req.id)
         }
         method.appendChild(del);
 
@@ -296,6 +297,17 @@ function saveRequest(data) {
             'Content-Type': 'application/json'  // Set the correct content type
         },
         body: JSON.stringify(data)
+    }).then(res => res.json()).then(res => renderSavedRequests(res))
+}
+
+function deleteSavedRequest(id) {
+    console.log(id)
+
+    fetch(`/delete-request/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'  // Set the correct content type
+        },
     }).then(res => res.json()).then(res => renderSavedRequests(res))
 }
 

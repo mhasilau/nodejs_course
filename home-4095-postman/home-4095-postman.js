@@ -1,25 +1,25 @@
 const express = require('express');
 const path = require('path');
 const fs = require("fs");
+const cors = require('cors');
 
 const webServer = express();
 webServer.use(express.json());
+webServer.use(cors());
 
 webServer.use(express.static(path.join(__dirname, 'site')));
 
 const mainPage = path.join(__dirname, 'site/index.html');
 
 const port = 7480;
-const votesFilePath = path.join(__dirname, 'saved-requests');
+const savedFilePath = path.join(__dirname, 'saved-requests');
 
 function saveFile(data, callback) {
-    console.log(data);
-
     // Convert data to string format
     const dataString = JSON.stringify(data) + '\n';
 
     // Append data to the file, creating it if it doesn't exist
-    fs.appendFile(votesFilePath, dataString, (err) => {
+    fs.appendFile(savedFilePath, dataString, (err) => {
         if (err) {
             console.error('Error writing to file:', err);
             return callback(err);
@@ -27,7 +27,7 @@ function saveFile(data, callback) {
         console.log('Data has been added to file!');
 
         // Read the updated file and return its contents
-        fs.readFile(votesFilePath, 'utf8', (err, fileData) => {
+        fs.readFile(savedFilePath, 'utf8', (err, fileData) => {
             if (err) {
                 console.error('Error reading file:', err);
                 return callback(err);
@@ -52,6 +52,36 @@ function objectToQueryString(obj) {
     return queryString;
 }
 
+function deleteFileObject(id, callback) {
+    console.log('id', id)
+    fs.readFile(savedFilePath, 'utf8', (err, fileData) => {
+        if (err) {
+            console.error('Error reading file:', err);
+            return callback(err);
+        }
+
+        let allData;
+        try {
+            allData = fileData.trim().split('\n').map(line => JSON.parse(line));
+        } catch (parseErr) {
+            console.error('Error parsing JSON:', parseErr);
+            return callback(parseErr);
+        }
+        // Filter out the object with the specified ID
+        allData = allData.filter(obj => Number(obj.id) !== Number(id));
+        allData = []
+        // Write the updated data back to the file
+        const updatedDataString = allData.map(obj => JSON.stringify(obj)).join('\n');
+        fs.writeFile(savedFilePath, updatedDataString, (err) => {
+            if (err) {
+                console.error('Error writing to file:', err);
+                return callback(err);
+            }
+            callback(null, allData);
+        });
+    });
+}
+
 webServer.get('/', (req, res) => {
     res.setHeader("Content-Type", "text/html");
     res.sendFile(path.resolve(mainPage));
@@ -67,7 +97,7 @@ webServer.post('/save', (req, res) => {
 });
 
 webServer.get('/get-saved-requests', (req, res) => {
-    fs.access(votesFilePath, fs.constants.F_OK, (err) => {
+    fs.access(savedFilePath, fs.constants.F_OK, (err) => {
         if (err) {
             // File does not exist, return an empty array
             console.log('File does not exist, returning empty array.');
@@ -75,13 +105,20 @@ webServer.get('/get-saved-requests', (req, res) => {
         }
 
         // File exists, read its contents
-        fs.readFile(votesFilePath, 'utf8', (err, fileData) => {
+        fs.readFile(savedFilePath, 'utf8', (err, fileData) => {
             if (err) {
                 console.error('Error reading file:', err);
                 return res.status(500).json({ error: 'Failed to read saved requests' });
             }
-            const allData = fileData.trim().split('\n').map(line => JSON.parse(line));
-            res.json(allData);
+            console.log('aaaa',fileData)
+            if (fileData) {
+                const allData = fileData.trim().split('\n').map(line => JSON.parse(line));
+                console.log('allData', allData)
+                res.json(allData);
+            } else {
+                res.json([]);
+            }
+
         });
     });
 });
@@ -155,6 +192,17 @@ webServer.post('/request', async (req, res) => {
 
     // Handling other HTTP methods like DELETE and PUT can be added here
 
+});
+
+webServer.delete('/delete-request/:id', (req, res) => {
+    const id = req.params.id;
+    console.log(id);
+    deleteFileObject(id, (err, updatedData) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to delete data' });
+        }
+        res.json(updatedData); // Return the updated content of the file as JSON
+    });
 });
 
 webServer.listen(port, () => {
