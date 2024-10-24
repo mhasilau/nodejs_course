@@ -30,7 +30,7 @@ hideParams()
 
 
 
-
+let resStatus
 let methodSelect;
 httpMethodSelect.onchange = () => {
     methodSelect = httpMethodSelect.value;
@@ -204,7 +204,10 @@ function sendRequest(data) {
             'Content-Type': 'application/json'  // Set the correct content type
         },
         body: JSON.stringify(data)
-    }).then(res => res.json()).then(res => {
+    }).then(res => {
+        resStatus = res.status
+        return res.json()
+    }).then(res => {
         renderResponseData(res)
     }).catch(error => console.error('Ошибка:', error));
 }
@@ -216,7 +219,7 @@ function renderResponseData(data) {
     responseDiv.appendChild(h2);
 
     const status = document.createElement('h5');
-    status.innerHTML = `Статус ответа ${200}`; // TODO получить статус
+    status.innerHTML = `Статус ответа ${resStatus}`;
     responseDiv.appendChild(status);
 
     const headers = document.createElement('div');

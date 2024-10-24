@@ -104,6 +104,12 @@
     cursor: pointer;
 }
 
+li {
+    list-style-type: none; /* Убираем маркеры */
+}
+ul {
+    padding-left: 5px; /* Сдвигаем список влево */
+}
 
 
 
