@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require("fs");
 const cors = require('cors');
+const fetch = require('node-fetch');
 
 const webServer = express();
 webServer.use(express.json());
