@@ -9,9 +9,6 @@ const paramsDiv = document.querySelector('.params')
 const headersDiv = document.querySelector('.headers')
 const responseDiv = document.querySelector('.response')
 
-
-
-
 // Кнопки и элементы
 const httpMethodSelect = document.getElementById('http-method');
 const httpUrl = document.getElementById('req-url');
@@ -23,11 +20,6 @@ const addParamButton = document.querySelector('#add-param');
 const saveBtn = document.querySelector('#save');
 const submitBtn = document.querySelector('#submit');
 const cleanBtn = document.querySelector('#clean');
-
-
-
-hideParams()
-
 
 
 let methodSelect;
@@ -58,10 +50,9 @@ httpMethodSelect.onchange = () => {
         default:
             break;
     }
-
-
 }
 
+hideParams()
 
 function hideParams() {
     reqBodyDiv.style.display = 'none'
@@ -74,7 +65,6 @@ function showParams() {
     reqParamsDiv.style.display = 'block'
     reqHeadersDiv.style.display = 'block'
 }
-
 
 addParamButton.onclick = () => {
     const newRow = addNewParams();
@@ -124,12 +114,6 @@ function addNewHeaders() {
 function collectAndSubmitData(todo) {
     let body = httpBody.value ? JSON.parse(httpBody.value) : '{}'
 
-    if (httpBody.value) {
-        console.log('val')
-    } else {
-        console.log('none')
-    }
-
     const requestData = {
         method: httpMethodSelect.value,
         url: httpUrl.value,
@@ -137,7 +121,6 @@ function collectAndSubmitData(todo) {
         params: {},
         headers: {}
     };
-
 
     const paramsReq = {}
     // Collect params
@@ -171,14 +154,12 @@ function collectAndSubmitData(todo) {
 
     switch (todo) {
         case 'POST':
-            console.log('post')
             sendRequest(requestData)
             break;
         case 'SAVE':
             saveRequest(requestData)
             break;
     }
-
 }
 
 submitBtn.onclick = () => collectAndSubmitData('POST')
@@ -226,7 +207,6 @@ function renderResponseData(data) {
 
     const ul = document.createElement('ul');
     for (let header in data.resHeaders) {
-        console.log(header)
         const li = document.createElement('li');
         li.innerText = header +" : "+ data.resHeaders[header]
         ul.appendChild(li)
@@ -239,7 +219,6 @@ function renderResponseData(data) {
 
     const body_h5 = document.createElement('h5');
     body_h5.innerHTML = 'Тело ответа:';
-
 
     bodyDiv.appendChild(body_h5);
 
@@ -254,7 +233,6 @@ function renderResponseData(data) {
 
 function renderSavedRequests(reqs) {
     savedMethodsDiv.innerHTML = '';
-    console.log('render', reqs)
     reqs.forEach(req => {
         const method = document.createElement('div')
         method.classList.add('method')
@@ -299,8 +277,6 @@ function saveRequest(data) {
 }
 
 function deleteSavedRequest(id) {
-    console.log(id)
-
     fetch(`/delete-request/${id}`, {
         method: 'DELETE',
         headers: {

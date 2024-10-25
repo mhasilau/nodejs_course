@@ -54,7 +54,6 @@ function objectToQueryString(obj) {
 }
 
 function deleteFileObject(id, callback) {
-    console.log('id', id)
     fs.readFile(savedFilePath, 'utf8', (err, fileData) => {
         if (err) {
             console.error('Error reading file:', err);
@@ -111,10 +110,8 @@ webServer.get('/get-saved-requests', (req, res) => {
                 console.error('Error reading file:', err);
                 return res.status(500).json({ error: 'Failed to read saved requests' });
             }
-            console.log('aaaa',fileData)
             if (fileData) {
                 const allData = fileData.trim().split('\n').map(line => JSON.parse(line));
-                console.log('allData', allData)
                 res.json(allData);
             } else {
                 res.json([]);
@@ -131,14 +128,11 @@ webServer.post('/request', async (req, res) => {
     let resBody;
     let resHeaders = {};
 
-
     if(method === 'GET') {
-
         let query = '';
         if (Object.values(params).length) {
             query = objectToQueryString(params);
         }
-        console.log(url + query);
 
         try {
             const response = await fetch(url + query, {
@@ -149,7 +143,6 @@ webServer.post('/request', async (req, res) => {
             // Захват статуса ответа
             resStatus = response.status;
             resMessage = response.message
-
 
             // Захват заголовков ответа
             response.headers.forEach((value, key) => {
@@ -185,7 +178,6 @@ webServer.post('/request', async (req, res) => {
             resStatus = response.status;
             resMessage = response.message
 
-
             // Захват заголовков ответа
             response.headers.forEach((value, key) => {
                 resHeaders[key] = value;
@@ -213,7 +205,6 @@ webServer.post('/request', async (req, res) => {
 
 webServer.delete('/delete-request/:id', (req, res) => {
     const id = req.params.id;
-    console.log(id);
     deleteFileObject(id, (err, updatedData) => {
         if (err) {
             return res.status(500).json({ error: 'Failed to delete data' });
