@@ -3,7 +3,8 @@ const path = require('path');
 const fs = require("fs");
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const { JSDOM } = require('jsdom');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
 const url = require('url');
 
 const webServer = express();
