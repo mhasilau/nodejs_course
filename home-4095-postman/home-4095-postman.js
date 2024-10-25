@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require("fs");
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { JSDOM } = require('jsdom');
+const url = require('url');
 
 const webServer = express();
 webServer.use(express.json());
@@ -82,6 +84,29 @@ function deleteFileObject(id, callback) {
     });
 }
 
+async function fetchImagesAndReplaceUrls(htmlContent, baseUrl) {
+    const dom = new JSDOM(htmlContent);
+    const images = dom.window.document.querySelectorAll('img');
+
+    for (let img of images) {
+        const src = img.getAttribute('src');
+        if (src) {
+            const absoluteUrl = new URL(src, baseUrl).href;
+            try {
+                const imageResponse = await fetch(absoluteUrl);
+                const arrayBuffer = await imageResponse.arrayBuffer();
+                const base64Image = Buffer.from(arrayBuffer).toString('base64');
+                const mimeType = imageResponse.headers.get('content-type');
+                img.setAttribute('src', `data:${mimeType};base64,${base64Image}`);
+            } catch (error) {
+                console.error(`Failed to fetch image: ${absoluteUrl}`, error);
+            }
+        }
+    }
+
+    return dom.serialize();
+}
+
 webServer.get('/', (req, res) => {
     res.setHeader("Content-Type", "text/html");
     res.sendFile(path.resolve(mainPage));
@@ -155,6 +180,7 @@ webServer.post('/request', async (req, res) => {
             if (contentType && contentType.includes('text/html')) {
                 // If content is HTML, return it as text
                 resBody = await response.text();
+                resBody = await fetchImagesAndReplaceUrls(resBody, url);
             } else {
                 // For other content types, try to parse as JSON
                 try {

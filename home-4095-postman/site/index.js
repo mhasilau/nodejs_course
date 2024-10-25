@@ -232,14 +232,16 @@ function renderResponseData(data) {
         iframe.style.border = '1px solid #ccc';
         bodyDiv.appendChild(iframe);
 
-        iframe.onload = function() {
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-            doc.open();
-            doc.write(data.resBody);
-            doc.close();
-        };
+        // Записываем HTML-контент в iframe
+        iframe.srcdoc = data.resBody;
 
-        iframe.src = 'about:blank';
+        // Добавляем текстовое представление HTML
+        const htmlText = document.createElement('textarea');
+        htmlText.value = data.resBody;
+        htmlText.classList.add('w-100');
+        htmlText.style.marginTop = '10px';
+        htmlText.style.height = '200px';
+        bodyDiv.appendChild(htmlText);
     } else {
         const text = document.createElement('textarea');
         text.innerText = JSON.stringify(data.resBody)
