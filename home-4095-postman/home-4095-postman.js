@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require("fs");
 const cors = require('cors');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const webServer = express();
 webServer.use(express.json());
