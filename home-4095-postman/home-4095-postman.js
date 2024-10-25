@@ -85,29 +85,6 @@ function deleteFileObject(id, callback) {
     });
 }
 
-async function fetchImagesAndReplaceUrls(htmlContent, baseUrl) {
-    const dom = new JSDOM(htmlContent);
-    const images = dom.window.document.querySelectorAll('img');
-
-    for (let img of images) {
-        const src = img.getAttribute('src');
-        if (src) {
-            const absoluteUrl = new URL(src, baseUrl).href;
-            try {
-                const imageResponse = await fetch(absoluteUrl);
-                const arrayBuffer = await imageResponse.arrayBuffer();
-                const base64Image = Buffer.from(arrayBuffer).toString('base64');
-                const mimeType = imageResponse.headers.get('content-type');
-                img.setAttribute('src', `data:${mimeType};base64,${base64Image}`);
-            } catch (error) {
-                console.error(`Failed to fetch image: ${absoluteUrl}`, error);
-            }
-        }
-    }
-
-    return dom.serialize();
-}
-
 webServer.get('/', (req, res) => {
     res.setHeader("Content-Type", "text/html");
     res.sendFile(path.resolve(mainPage));
@@ -152,6 +129,7 @@ webServer.post('/request', async (req, res) => {
     let resStatus;
     let resMessage;
     let resBody;
+    let clonedResponse;
     let resHeaders = {};
 
     if (method === 'GET') {
@@ -164,14 +142,23 @@ webServer.post('/request', async (req, res) => {
             const response = await fetch(url + query, {
                 method: method,
                 headers: headers,
+                redirect: 'manual'
             });
 
+            clonedResponse = response.clone();
+
+
+            // if (response.status === 301 || response.status === 302) {
+            //     const redirectUrl = clonedResponse.headers.get('Location');
+            //     console.log('Redirect URL:', redirectUrl);
+            // }
+
             // Capture response status
-            resStatus = response.status;
-            resMessage = response.statusText;
+            resStatus = clonedResponse.status;
+            resMessage = clonedResponse.statusText;
 
             // Capture response headers
-            response.headers.forEach((value, key) => {
+            clonedResponse.headers.forEach((value, key) => {
                 resHeaders[key] = value;
             });
 
@@ -180,15 +167,14 @@ webServer.post('/request', async (req, res) => {
 
             if (contentType && contentType.includes('text/html')) {
                 // If content is HTML, return it as text
-                resBody = await response.text();
-                resBody = await fetchImagesAndReplaceUrls(resBody, url);
+                resBody = await clonedResponse.text();
             } else {
                 // For other content types, try to parse as JSON
                 try {
                     resBody = await response.json();
                 } catch (jsonError) {
                     // If JSON parsing fails, return the response as text
-                    resBody = await response.text();
+                    resBody = await clonedResponse.text();
                 }
             }
 
