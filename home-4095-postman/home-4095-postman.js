@@ -128,7 +128,7 @@ webServer.post('/request', async (req, res) => {
     let resBody;
     let resHeaders = {};
 
-    if(method === 'GET') {
+    if (method === 'GET') {
         let query = '';
         if (Object.values(params).length) {
             query = objectToQueryString(params);
@@ -140,24 +140,37 @@ webServer.post('/request', async (req, res) => {
                 headers: headers,
             });
 
-            // Захват статуса ответа
+            // Capture response status
             resStatus = response.status;
-            resMessage = response.message
+            resMessage = response.statusText;
 
-            // Захват заголовков ответа
+            // Capture response headers
             response.headers.forEach((value, key) => {
                 resHeaders[key] = value;
             });
 
-            // Парсинг тела ответа как JSON
-            resBody = await response.json();
+            // Check content type
+            const contentType = response.headers.get('content-type');
+
+            if (contentType && contentType.includes('text/html')) {
+                // If content is HTML, return it as text
+                resBody = await response.text();
+            } else {
+                // For other content types, try to parse as JSON
+                try {
+                    resBody = await response.json();
+                } catch (jsonError) {
+                    // If JSON parsing fails, return the response as text
+                    resBody = await response.text();
+                }
+            }
 
         } catch (e) {
             console.log(e);
             return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
         }
 
-// Отправка обратно ответа с полученным статусом, заголовками и телом
+        // Send back the response with the captured status, headers, and body
         return res.status(resStatus).send({
             resStatus,
             resMessage,

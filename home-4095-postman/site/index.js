@@ -222,10 +222,33 @@ function renderResponseData(data) {
 
     bodyDiv.appendChild(body_h5);
 
-    const text = document.createElement('textarea');
-    text.innerText = JSON.stringify(data.resBody)
-    text.classList.add('w-100')
-    bodyDiv.appendChild(text);
+    console.log(data.resHeaders['content-type'])
+
+    if (data.resHeaders['content-type'] && data.resHeaders['content-type'].includes('text/html')) {
+
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '100%';
+        iframe.style.height = '500px';
+        iframe.style.border = '1px solid #ccc';
+        bodyDiv.appendChild(iframe);
+
+        iframe.onload = function() {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(data.resBody);
+            doc.close();
+        };
+
+        iframe.src = 'about:blank';
+    } else {
+        const text = document.createElement('textarea');
+        text.innerText = JSON.stringify(data.resBody)
+        text.classList.add('w-100')
+        bodyDiv.appendChild(text);
+    }
+
+
+
 
     responseDiv.appendChild(headers);
     responseDiv.appendChild(bodyDiv);
