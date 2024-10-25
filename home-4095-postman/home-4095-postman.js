@@ -127,6 +127,7 @@ webServer.get('/get-saved-requests', (req, res) => {
 webServer.post('/request', async (req, res) => {
     const {method, url, params, body, headers} = req.body;
     let resStatus;
+    let resMessage;
     let resBody;
     let resHeaders = {};
 
@@ -147,6 +148,8 @@ webServer.post('/request', async (req, res) => {
 
             // Захват статуса ответа
             resStatus = response.status;
+            resMessage = response.message
+
 
             // Захват заголовков ответа
             response.headers.forEach((value, key) => {
@@ -163,6 +166,8 @@ webServer.post('/request', async (req, res) => {
 
 // Отправка обратно ответа с полученным статусом, заголовками и телом
         return res.status(resStatus).send({
+            resStatus,
+            resMessage,
             resBody,
             resHeaders,
         });
@@ -176,18 +181,29 @@ webServer.post('/request', async (req, res) => {
                 body: JSON.stringify(body)
             });
 
+            // Захват статуса ответа
+            resStatus = response.status;
+            resMessage = response.message
+
+
+            // Захват заголовков ответа
             response.headers.forEach((value, key) => {
                 resHeaders[key] = value;
             });
+
+            // Парсинг тела ответа как JSON
             resBody = await response.json();
+
         } catch (e) {
             console.log(e);
             return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
         }
 
-        return res.send({
+        return res.status(resStatus).send({
+            resStatus,
+            resMessage,
             resBody,
-            resHeaders
+            resHeaders,
         });
     }
 
