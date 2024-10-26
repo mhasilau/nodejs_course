@@ -212,7 +212,7 @@ function renderResponseData(data) {
     responseDiv.appendChild(status);
 
     const message = document.createElement('h5');
-    message.innerHTML = `Метод: <span>${data.info.message}</span>`;
+    message.innerHTML = `Сообщение: <span>${data.info.message}</span>`;
     responseDiv.appendChild(message);
 
     const headers = document.createElement('div');
