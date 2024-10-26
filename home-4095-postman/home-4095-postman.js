@@ -3,9 +3,6 @@ const path = require('path');
 const fs = require("fs");
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
-const url = require('url');
 
 const webServer = express();
 webServer.use(express.json());
@@ -126,13 +123,13 @@ webServer.get('/get-saved-requests', (req, res) => {
 
 webServer.post('/request', async (req, res) => {
     const {method, url, params, body, headers} = req.body;
-    let resStatus;
-    let resMessage;
+    // let resStatus;
+    // let resMessage;
     let resBody;
     let clonedResponse;
     let resHeaders = {};
 
-    if (method === 'GET') {
+    if (method === 'GET' || method === 'DELETE') {
         let query = '';
         if (Object.values(params).length) {
             query = objectToQueryString(params);
@@ -148,81 +145,68 @@ webServer.post('/request', async (req, res) => {
             clonedResponse = response.clone();
 
 
-            // if (response.status === 301 || response.status === 302) {
-            //     const redirectUrl = clonedResponse.headers.get('Location');
-            //     console.log('Redirect URL:', redirectUrl);
-            // }
-
-            // Capture response status
-            resStatus = clonedResponse.status;
-            resMessage = clonedResponse.statusText;
-
-            // Capture response headers
             clonedResponse.headers.forEach((value, key) => {
                 resHeaders[key] = value;
             });
 
-            // Check content type
-            const contentType = response.headers.get('content-type');
-
-            if (contentType && contentType.includes('text/html')) {
-                // If content is HTML, return it as text
+            try {
+                resBody = await response.json();
+            } catch (jsonError) {
+                // If JSON parsing fails, return the response as text
                 resBody = await clonedResponse.text();
-            } else {
-                // For other content types, try to parse as JSON
-                try {
-                    resBody = await response.json();
-                } catch (jsonError) {
-                    // If JSON parsing fails, return the response as text
-                    resBody = await clonedResponse.text();
-                }
             }
+
+            res.send({
+                info: {
+                    status: clonedResponse.status,
+                    message: clonedResponse.statusText,
+                },
+                headers: resHeaders,
+                body: resBody
+            })
 
         } catch (e) {
             console.log(e);
             return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
         }
 
-        // Send back the response with the captured status, headers, and body
-        return res.status(resStatus).send({
-            resStatus,
-            resMessage,
-            resBody,
-            resHeaders,
-        });
     }
 
-    if (method === 'POST') {
+    if (method === 'POST' || method === 'PUT') {
         try {
             const response = await fetch(url, {
                 method: method,
                 headers: headers,
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
+                redirect: 'manual'
             });
 
-            // Захват статуса ответа
-            resStatus = response.status;
-            resMessage = response.message
+            clonedResponse = response.clone();
 
-            // Захват заголовков ответа
-            response.headers.forEach((value, key) => {
+            clonedResponse.headers.forEach((value, key) => {
                 resHeaders[key] = value;
             });
 
-            // Парсинг тела ответа как JSON
-            resBody = await response.json();
+            try {
+                resBody = await response.json();
+            } catch (jsonError) {
+                // If JSON parsing fails, return the response as text
+                resBody = await clonedResponse.text();
+            }
+
+            res.send({
+                info: {
+                    status: clonedResponse.status,
+                    message: clonedResponse.statusText,
+                },
+                headers: resHeaders,
+                body: resBody
+            })
 
         } catch (e) {
             console.log(e);
             return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
         }
-
-        return res.status(resStatus).send({
-            resStatus,
-            resMessage,
-            resBody,
-            resHeaders,
-        });
     }
 
     // Handling other HTTP methods like DELETE and PUT can be added here

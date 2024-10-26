@@ -21,6 +21,9 @@ const saveBtn = document.querySelector('#save');
 const submitBtn = document.querySelector('#submit');
 const cleanBtn = document.querySelector('#clean');
 
+const loading = document.querySelector('.loading');
+loading.style.display = 'none';
+
 
 let methodSelect;
 httpMethodSelect.onchange = () => {
@@ -40,11 +43,11 @@ httpMethodSelect.onchange = () => {
             break;
 
         case 'PUT':
-            
+            reqBodyDiv.style.display = 'block'
             break;
 
         case 'DELETE':
-            
+            reqBodyDiv.style.display = 'none'
             break;
     
         default:
@@ -112,6 +115,7 @@ function addNewHeaders() {
 
 
 function collectAndSubmitData(todo) {
+
     let body = httpBody.value ? JSON.parse(httpBody.value) : '{}'
 
     const requestData = {
@@ -172,6 +176,7 @@ function clearForm() {
   httpBody.value = '';
   paramsDiv.innerHTML = '';
   headersDiv.innerHTML = '';
+  responseDiv.innerHTML = ''
 
   hideParams();
 
@@ -179,6 +184,8 @@ function clearForm() {
 }
 
 function sendRequest(data) {
+    loading.style.display = 'flex';
+
     responseDiv.innerHTML = ''
 
     fetch('/request', {
@@ -189,26 +196,32 @@ function sendRequest(data) {
         body: JSON.stringify(data)
     }).then(res => res.json()).then(res => {
         renderResponseData(res)
-    }).catch(error => console.error('Ошибка:', error));
+    }).catch(error => console.error('Ошибка:', error))
+    .finally(() => loading.style.display = 'none' );
 }
 
 function renderResponseData(data) {
+    console.log(data)
     responseDiv.innerHTML = ''
     const h2 = document.createElement('h2');
     h2.innerHTML = `Ответ на запрос`;
     responseDiv.appendChild(h2);
 
     const status = document.createElement('h5');
-    status.innerHTML = `Статус ответа ${data.resStatus}`;
+    status.innerHTML = `Статус ответа ${data.info.status}`;
     responseDiv.appendChild(status);
+
+    const message = document.createElement('h5');
+    message.innerHTML = `Метод: <span>${data.info.message}</span>`;
+    responseDiv.appendChild(message);
 
     const headers = document.createElement('div');
     headers.classList.add('res-headers')
 
     const ul = document.createElement('ul');
-    for (let header in data.resHeaders) {
+    for (let header in data.headers) {
         const li = document.createElement('li');
-        li.innerText = header +" : "+ data.resHeaders[header]
+        li.innerText = header +" : "+ data.headers[header]
         ul.appendChild(li)
     }
     headers.appendChild(ul);
@@ -222,35 +235,16 @@ function renderResponseData(data) {
 
     bodyDiv.appendChild(body_h5);
 
-    console.log(data.resHeaders['content-type'])
-
-    if (data.resHeaders['content-type'] && data.resHeaders['content-type'].includes('text/html')) {
-
-        const iframe = document.createElement('iframe');
-        iframe.style.width = '100%';
-        iframe.style.height = '500px';
-        iframe.style.border = '1px solid #ccc';
-        bodyDiv.appendChild(iframe);
-
-        // Записываем HTML-контент в iframe
-        iframe.srcdoc = data.resBody;
-
-        // Добавляем текстовое представление HTML
-        const htmlText = document.createElement('textarea');
-        htmlText.value = data.resBody;
-        htmlText.classList.add('w-100');
-        htmlText.style.marginTop = '10px';
-        htmlText.style.height = '200px';
-        bodyDiv.appendChild(htmlText);
+    if (data.headers['content-type'] && data.headers['content-type'].includes('json')) {
+        const pre = document.createElement('pre');
+        pre.innerText = JSON.stringify(data.body, null, 2)
+        bodyDiv.appendChild(pre);
     } else {
         const text = document.createElement('textarea');
-        text.innerText = JSON.stringify(data.resBody)
+        text.innerText = JSON.stringify(data.body)
         text.classList.add('w-100')
         bodyDiv.appendChild(text);
     }
-
-
-
 
     responseDiv.appendChild(headers);
     responseDiv.appendChild(bodyDiv);
@@ -266,6 +260,8 @@ function renderSavedRequests(reqs) {
         const h5 = document.createElement('h5');
         h5.innerHTML = `Метод: <span>${req.method}</span>`;
         method.appendChild(h5);
+
+
 
         const p = document.createElement('p');
         p.textContent = req.url;
@@ -292,6 +288,8 @@ function renderSavedRequests(reqs) {
 }
 
 function saveRequest(data) {
+    loading.style.display = 'flex';
+
     fetch('/save', {
         method: 'POST',
         headers: {
@@ -299,6 +297,8 @@ function saveRequest(data) {
         },
         body: JSON.stringify(data)
     }).then(res => res.json()).then(res => renderSavedRequests(res))
+        .catch(error => console.error('Ошибка:', error))
+        .finally(() => loading.style.display = 'none' );
 }
 
 function deleteSavedRequest(id) {
