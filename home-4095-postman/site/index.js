@@ -201,8 +201,8 @@ function sendRequest(data) {
 }
 
 function renderResponseData(data) {
-    console.log(data)
-    responseDiv.innerHTML = ''
+    console.log(data);
+    responseDiv.innerHTML = '';
     const h2 = document.createElement('h2');
     h2.innerHTML = `Ответ на запрос`;
     responseDiv.appendChild(h2);
@@ -216,37 +216,43 @@ function renderResponseData(data) {
     responseDiv.appendChild(message);
 
     const headers = document.createElement('div');
-    headers.classList.add('res-headers')
+    headers.classList.add('res-headers');
 
     const ul = document.createElement('ul');
     for (let header in data.headers) {
         const li = document.createElement('li');
-        li.innerText = header +" : "+ data.headers[header]
-        ul.appendChild(li)
+        li.innerText = header + " : " + data.headers[header];
+        ul.appendChild(li);
     }
     headers.appendChild(ul);
-    responseDiv.appendChild(status);
+    responseDiv.appendChild(headers);
 
     const bodyDiv = document.createElement('div');
-    bodyDiv.classList.add('res-body')
+    bodyDiv.classList.add('res-body');
 
     const body_h5 = document.createElement('h5');
     body_h5.innerHTML = 'Тело ответа:';
-
     bodyDiv.appendChild(body_h5);
 
-    if (data.headers['content-type'] && data.headers['content-type'].includes('json')) {
+    const contentType = data.headers['content-type'] || '';
+
+    if (contentType.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = data.body;
+        img.alt = 'Response Image';
+        img.style.maxWidth = '100%';
+        bodyDiv.appendChild(img);
+    } else if (contentType.includes('json')) {
         const pre = document.createElement('pre');
-        pre.innerText = JSON.stringify(data.body, null, 2)
+        pre.innerText = JSON.stringify(data.body, null, 2);
         bodyDiv.appendChild(pre);
     } else {
         const text = document.createElement('textarea');
-        text.innerText = JSON.stringify(data.body)
-        text.classList.add('w-100')
+        text.innerText = JSON.stringify(data.body);
+        text.classList.add('w-100');
         bodyDiv.appendChild(text);
     }
 
-    responseDiv.appendChild(headers);
     responseDiv.appendChild(bodyDiv);
 }
 

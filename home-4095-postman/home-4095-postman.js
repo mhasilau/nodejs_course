@@ -123,94 +123,57 @@ webServer.get('/get-saved-requests', (req, res) => {
 
 webServer.post('/request', async (req, res) => {
     const {method, url, params, body, headers} = req.body;
-    // let resStatus;
-    // let resMessage;
     let resBody;
     let clonedResponse;
     let resHeaders = {};
 
-    if (method === 'GET' || method === 'DELETE') {
+    try {
         let query = '';
         if (Object.values(params).length) {
             query = objectToQueryString(params);
         }
 
-        try {
-            const response = await fetch(url + query, {
-                method: method,
-                headers: headers,
-                redirect: 'manual'
-            });
+        const response = await fetch(url + query, {
+            method: method,
+            headers: headers,
+            body: method === 'POST' || method === 'PUT' ? JSON.stringify(body) : undefined,
+            redirect: 'manual'
+        });
 
-            clonedResponse = response.clone();
+        clonedResponse = response.clone();
 
+        clonedResponse.headers.forEach((value, key) => {
+            resHeaders[key] = value;
+        });
 
-            clonedResponse.headers.forEach((value, key) => {
-                resHeaders[key] = value;
-            });
+        const contentType = resHeaders['content-type'] || '';
 
+        if (contentType.startsWith('image/')) {
+            // If the response is an image, send it as base64
+            const imageBuffer = await response.buffer();
+            const base64Image = imageBuffer.toString('base64');
+            resBody = `data:${contentType};base64,${base64Image}`;
+        } else {
             try {
                 resBody = await response.json();
             } catch (jsonError) {
-                // If JSON parsing fails, return the response as text
                 resBody = await clonedResponse.text();
             }
-
-            res.send({
-                info: {
-                    status: clonedResponse.status,
-                    message: clonedResponse.statusText,
-                },
-                headers: resHeaders,
-                body: resBody
-            })
-
-        } catch (e) {
-            console.log(e);
-            return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
         }
 
+        res.send({
+            info: {
+                status: clonedResponse.status,
+                message: clonedResponse.statusText,
+            },
+            headers: resHeaders,
+            body: resBody
+        });
+
+    } catch (e) {
+        console.log(e);
+        return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
     }
-
-    if (method === 'POST' || method === 'PUT') {
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: headers,
-                body: JSON.stringify(body),
-                redirect: 'manual'
-            });
-
-            clonedResponse = response.clone();
-
-            clonedResponse.headers.forEach((value, key) => {
-                resHeaders[key] = value;
-            });
-
-            try {
-                resBody = await response.json();
-            } catch (jsonError) {
-                // If JSON parsing fails, return the response as text
-                resBody = await clonedResponse.text();
-            }
-
-            res.send({
-                info: {
-                    status: clonedResponse.status,
-                    message: clonedResponse.statusText,
-                },
-                headers: resHeaders,
-                body: resBody
-            })
-
-        } catch (e) {
-            console.log(e);
-            return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
-        }
-    }
-
-    // Handling other HTTP methods like DELETE and PUT can be added here
-
 });
 
 webServer.delete('/delete-request/:id', (req, res) => {
