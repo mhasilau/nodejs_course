@@ -202,59 +202,103 @@ function sendRequest(data) {
 
 function renderResponseData(data) {
     console.log(data);
+    console.log(data.ok)
     responseDiv.innerHTML = '';
+
+    // Create and append response header
     const h2 = document.createElement('h2');
     h2.innerHTML = `Ответ на запрос`;
     responseDiv.appendChild(h2);
 
+    if(!data.info.status) {
+
+
+        // Create and append status
+        const error = document.createElement('h5');
+        error.innerHTML = `Статус ответа ${data.error}`;
+        responseDiv.appendChild(error);
+
+        // Create and append message
+        const message = document.createElement('h5');
+        message.innerHTML = `Сообщение: <span>${data.details}</span>`;
+        responseDiv.appendChild(message);
+        return
+    }
+
+
+    // Create and append status
     const status = document.createElement('h5');
     status.innerHTML = `Статус ответа ${data.info.status}`;
     responseDiv.appendChild(status);
 
+    // Create and append message
     const message = document.createElement('h5');
     message.innerHTML = `Сообщение: <span>${data.info.message}</span>`;
     responseDiv.appendChild(message);
 
+    // Create and append headers
     const headers = document.createElement('div');
     headers.classList.add('res-headers');
-
     const ul = document.createElement('ul');
     for (let header in data.headers) {
         const li = document.createElement('li');
-        li.innerText = header + " : " + data.headers[header];
+        li.innerText = `${header}: ${data.headers[header]}`;
         ul.appendChild(li);
     }
     headers.appendChild(ul);
     responseDiv.appendChild(headers);
 
+    // Create and append body
     const bodyDiv = document.createElement('div');
     bodyDiv.classList.add('res-body');
-
     const body_h5 = document.createElement('h5');
     body_h5.innerHTML = 'Тело ответа:';
     bodyDiv.appendChild(body_h5);
 
     const contentType = data.headers['content-type'] || '';
+    console.log('contentType', contentType);
 
-    if (contentType.startsWith('image/')) {
-        const img = document.createElement('img');
-        img.src = data.body;
-        img.alt = 'Response Image';
-        img.style.maxWidth = '100%';
-        bodyDiv.appendChild(img);
-    } else if (contentType.includes('json')) {
-        const pre = document.createElement('pre');
-        pre.innerText = JSON.stringify(data.body, null, 2);
-        bodyDiv.appendChild(pre);
-    } else {
-        const text = document.createElement('textarea');
-        text.innerText = JSON.stringify(data.body);
-        text.classList.add('w-100');
-        bodyDiv.appendChild(text);
+    try {
+
+        if (contentType.includes('image')) {
+            const img = document.createElement('img');
+            img.src = `data:${contentType};base64,${data.body}`;
+            img.alt = 'Response Image';
+            img.style.maxWidth = '100%';
+            bodyDiv.appendChild(img);
+        } else if (contentType.includes('json')) {
+            const decodedBody = atob(data.body);
+            const pre = document.createElement('pre');
+            pre.innerText = JSON.stringify(JSON.parse(decodedBody), null, 2);
+            bodyDiv.appendChild(pre);
+        } else if (contentType.includes('css')) {
+            const textarea = document.createElement('textarea');
+            textarea.value = data.body;
+            textarea.classList.add('w-100');
+            textarea.readOnly = true;
+            bodyDiv.appendChild(textarea);
+        } else if (contentType.includes('text')) {
+            const decodedBody = atob(data.body);
+            const textarea = document.createElement('textarea');
+            textarea.value = decodedBody;
+            textarea.classList.add('w-100');
+            textarea.readOnly = true;
+            bodyDiv.appendChild(textarea);
+        } else {
+            const pre = document.createElement('pre');
+            pre.innerText = decodedBody;
+            bodyDiv.appendChild(pre);
+        }
+    } catch (error) {
+        console.error('Error decoding or parsing response body:', error);
+        const errorMsg = document.createElement('p');
+        errorMsg.innerText = 'Error displaying response body. See console for details.';
+        bodyDiv.appendChild(errorMsg);
     }
 
     responseDiv.appendChild(bodyDiv);
 }
+
 
 function renderSavedRequests(reqs) {
     savedMethodsDiv.innerHTML = '';

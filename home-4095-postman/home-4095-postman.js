@@ -121,10 +121,69 @@ webServer.get('/get-saved-requests', (req, res) => {
     });
 });
 
+// webServer.post('/request', async (req, res) => {
+//     const {method, url, params, body, headers} = req.body;
+//     let resBody;
+//     let clonedResponse;
+//     let resHeaders = {};
+//
+//     try {
+//         let query = '';
+//         if (Object.values(params).length) {
+//             query = objectToQueryString(params);
+//         }
+//
+//         const response = await fetch(url + query, {
+//             method: method,
+//             headers: headers,
+//             body: method === 'POST' || method === 'PUT' ? JSON.stringify(body) : undefined,
+//             redirect: 'manual'
+//         });
+//
+//         clonedResponse = response.clone();
+//         console.log(clonedResponse)
+//
+//         clonedResponse.headers.forEach((value, key) => {
+//             resHeaders[key] = value;
+//         });
+//
+//
+//             try {
+//                 const arrayBuffer = await response.arrayBuffer();
+//                 const buffer = Buffer.from(arrayBuffer);
+//                 resBody = buffer.toString('base64');
+//             } catch (jsonError) {
+//                 resBody = await clonedResponse.text();
+//             }
+//         console.log(
+//             {
+//                 info: {
+//                     status: clonedResponse.status,
+//                     message: clonedResponse.statusText,
+//                 },
+//                 headers: resHeaders,
+//                 body: resBody
+//             }
+//         )
+//         res.send({
+//             info: {
+//                 status: clonedResponse.status,
+//                 message: clonedResponse.statusText,
+//             },
+//             headers: resHeaders,
+//             body: resBody
+//         });
+//
+//     } catch (e) {
+//         console.log(e);
+//         return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
+//     }
+// });
+
+
 webServer.post('/request', async (req, res) => {
     const {method, url, params, body, headers} = req.body;
     let resBody;
-    let clonedResponse;
     let resHeaders = {};
 
     try {
@@ -140,41 +199,48 @@ webServer.post('/request', async (req, res) => {
             redirect: 'manual'
         });
 
-        clonedResponse = response.clone();
-
-        clonedResponse.headers.forEach((value, key) => {
+        // Преобразуем заголовки в обычный объект
+        response.headers.forEach((value, key) => {
             resHeaders[key] = value;
         });
 
-        const contentType = resHeaders['content-type'] || '';
+        // Проверяем тип контента
+        const contentType = response.headers.get('content-type');
 
-        if (contentType.startsWith('image/')) {
-            // If the response is an image, send it as base64
-            const imageBuffer = await response.buffer();
-            const base64Image = imageBuffer.toString('base64');
-            resBody = `data:${contentType};base64,${base64Image}`;
+        if (contentType && contentType.includes('text/css')) {
+            // Для CSS-файлов возвращаем как текст
+            resBody = await response.text();
         } else {
-            try {
-                resBody = await response.json();
-            } catch (jsonError) {
-                resBody = await clonedResponse.text();
-            }
+            // Для других типов пробуем получить как arrayBuffer и конвертировать в base64
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            resBody = buffer.toString('base64');
         }
+
+        console.log({
+            info: {
+                status: response.status,
+                message: response.statusText,
+            },
+            headers: resHeaders,
+            body: resBody.substring(0, 100) + '...' // Логируем только первые 100 символов
+        });
 
         res.send({
             info: {
-                status: clonedResponse.status,
-                message: clonedResponse.statusText,
+                status: response.status,
+                message: response.statusText,
             },
             headers: resHeaders,
             body: resBody
         });
 
     } catch (e) {
-        console.log(e);
-        return res.status(500).json({ error: 'Failed to fetch data', details: e.message });
+        console.error('Ошибка fetch:', e);
+        return res.status(500).json({ error: 'Не удалось получить данные', details: e.message });
     }
 });
+
 
 webServer.delete('/delete-request/:id', (req, res) => {
     const id = req.params.id;
