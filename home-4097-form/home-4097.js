@@ -2,8 +2,6 @@ const express = require('express');
 
 const webServer = express()
 const port = 7480;
-let userName;
-let message;
 
 webServer.use(express.urlencoded({ extended: true }));
 
@@ -48,7 +46,8 @@ webServer.get('/', (req, res) => {
     res.send(createForm());
 });
 webServer.post('/', (req, res) => {
-    userName = req.body.name ? req.body.name.toString().trim() : '';
+    const userName = req.body.name ? req.body.name.toString().trim() : '';
+    let message;
     const mood = req.body.mood;
 
     if (!userName.length) {
@@ -80,11 +79,17 @@ webServer.post('/', (req, res) => {
     }
 
     console.log(`Привет ${userName}. ${message}`);
-    res.redirect('/hello');
+    res.redirect(`/hello?user=${encodeURIComponent(userName)}&message=${encodeURIComponent(message)}`);
 });
 
 webServer.get('/hello', (req, res) => {
-    res.send(`Привет ${userName}. ${message}` + button);
+    const user = req.query.user;
+    const message = req.query.message;
+    if (user && message) {
+        res.send(`Привет ${decodeURIComponent(user)}. ${decodeURIComponent(message)}` + button);
+    } else {
+        res.redirect('/');
+    }
 });
 
 webServer.listen(port, () => {
