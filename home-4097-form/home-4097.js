@@ -5,11 +5,13 @@ const port = 7480;
 let userName;
 let message;
 
+webServer.use(express.urlencoded({ extended: true }));
+
 
 function createForm(name = '') {
     return `
     <div>
-        <form action="/mood" method="get">
+        <form action="/" method="post">
             <div>
                 <label for="name">Представьтесь:</label>
                 <input type="text" id="name" name="name" value="${name}">
@@ -45,10 +47,17 @@ const errorMessageEmptyName = '    <div>\n' +
 webServer.get('/', (req, res) => {
     res.send(createForm());
 });
+webServer.post('/', (req, res) => {
+    userName = req.body.name ? req.body.name.toString().trim() : '';
+    const mood = req.body.mood;
 
-webServer.get('/mood', (req, res) => {
-    userName = req.query.name ? req.query.name.toString().trim() : '';
-    const mood = req.query.mood;
+    if (!userName.length) {
+        return res.send(createForm(userName) + errorMessageEmptyName);
+    }
+
+    if (userName.length < 2) {
+        return res.send(createForm(userName) + errorMessageShortName);
+    }
 
     switch (mood) {
         case 'excellent':
@@ -66,21 +75,12 @@ webServer.get('/mood', (req, res) => {
         case 'disgusting':
             message = 'Я за плинтусом. Отпустит - позови.';
             break;
+        default:
+            message = 'Не могу определить твое настроение';
     }
-
-    if (!userName.length) {
-        return res.send(createForm(userName) + errorMessageEmptyName);
-    }
-
-    if (userName.length < 2) {
-        return res.send(createForm(userName) + errorMessageShortName);
-    }
-
-
-
-    res.redirect('/hello');
 
     console.log(`Привет ${userName}. ${message}`);
+    res.redirect('/hello');
 });
 
 webServer.get('/hello', (req, res) => {
