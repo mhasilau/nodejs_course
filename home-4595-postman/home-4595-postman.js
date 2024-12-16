@@ -2,12 +2,12 @@ const express = require('express');
 const path = require('path');
 const fs = require("fs").promises;
 const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const { engine } = require('express-handlebars');
-
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const exphbs = require('express-handlebars'); // Старый способ импорта
 
 const webServer = express();
-webServer.engine('handlebars', engine());
+
+webServer.engine('handlebars', exphbs()); // Используем старый API для handlebars
 webServer.set('view engine', 'handlebars');
 webServer.use(express.json());
 webServer.use(cors());
