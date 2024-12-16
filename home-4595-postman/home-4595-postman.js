@@ -11,6 +11,7 @@ webServer.engine('handlebars', exphbs()); // Используем старый A
 webServer.set('view engine', 'handlebars');
 webServer.use(express.json());
 webServer.use(cors());
+webServer.set('views', './views');
 
 webServer.use(express.static(path.join(__dirname, 'site')));
 
