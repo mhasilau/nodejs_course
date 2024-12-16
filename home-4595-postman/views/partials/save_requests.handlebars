@@ -1,0 +1,12 @@
+<div class="saved-methods w-50">
+    {{#each request}}
+        <div class="method [req.method.toLowerCase()]">
+            <h5>Метод: <span>{{this.method}}</span></h5>
+            <p>{{this.url}}</p>
+            <button class="delete-save-method" data-request="{{this.id}}">x</button>
+            <button class="save-submit" data-request="{{this.id}}">
+                Отправить запрос =)
+            </button>
+        </div>
+    {{/each}}
+</div>
